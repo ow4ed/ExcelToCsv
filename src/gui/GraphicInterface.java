@@ -11,7 +11,9 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -28,17 +30,22 @@ import javax.swing.border.Border;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import parser.Parser;
+
 public class GraphicInterface {
    	
+	private Parser parser;
 	private JFrame frame;
 
     public GraphicInterface() {
+    	
+    	this.parser = new Parser();
     	
     	this.frame = new JFrame("Excel File -> CSV File");
 		this.frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		this.frame.setLayout(new BorderLayout());
 		this.frame.setSize(1000, 500);
-		
+				
 		addContentToFrame();
 		open();
     }
@@ -48,14 +55,7 @@ public class GraphicInterface {
 		
     	// *** search section ***
     	
-		JLabel selectInfo = new JLabel("Select or Drag an Excel File To Convert");
-		selectInfo.setFont(new Font("Calibri", Font.BOLD, 30));
-		selectInfo.setHorizontalAlignment(JLabel.CENTER);
-		selectInfo.setVerticalAlignment(JLabel.CENTER);
-		Border borderForSelectInfoLabel = BorderFactory.createLineBorder(Color.ORANGE, 15);
-		selectInfo.setBorder(borderForSelectInfoLabel);
-		
-		JTextField filePath = new JTextField();
+    	JTextField filePath = new JTextField();
 		filePath.setFont(new Font("Calibri", Font.BOLD, 25));
 		filePath.setDropTarget(new DropTarget() {
 	        public synchronized void drop(DropTargetDropEvent DropEvent) {
@@ -89,10 +89,32 @@ public class GraphicInterface {
 			}
 		});
 		
+		JLabel selectInfo = new JLabel("Drag an Excel File Here or Click 'Select File'");
+		selectInfo.setFont(new Font("Calibri", Font.BOLD, 30));
+		selectInfo.setHorizontalAlignment(JLabel.CENTER);
+		selectInfo.setVerticalAlignment(JLabel.CENTER);
+		Border borderForSelectInfoLabel = BorderFactory.createLineBorder(Color.ORANGE, 15);
+		selectInfo.setBorder(borderForSelectInfoLabel);
+		selectInfo.setDropTarget(new DropTarget() {
+	        public synchronized void drop(DropTargetDropEvent DropEvent) {
+	            try {
+	            	DropEvent.acceptDrop(DnDConstants.ACTION_COPY);
+	                @SuppressWarnings("unchecked")
+					List<File> droppedFiles = (List<File>) DropEvent.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+	                for (File file : droppedFiles) {
+	                   
+	                	filePath.setText(file.getAbsolutePath());
+	                }
+	            } catch (Exception ex) {
+	                ex.printStackTrace();
+	            }
+	        }
+	    });
+		
 		JPanel searchSection = new JPanel(new BorderLayout());
-		searchSection.add(selectInfo , BorderLayout.NORTH);
 		searchSection.add(filePath, BorderLayout.CENTER);
 		searchSection.add(selectFile, BorderLayout.LINE_END);
+		searchSection.add(selectInfo , BorderLayout.NORTH);
 	
 		frame.add(searchSection, BorderLayout.NORTH);
 		
@@ -285,16 +307,45 @@ public class GraphicInterface {
 		frame.add(formatSection, BorderLayout.CENTER);
 		
 		// *** convert button ***
-		
+			
 		JButton convertFile = new JButton("Convert File !!!");
 		convertFile.setFont(new Font("Calibri", Font.BOLD, 45));
 		convertFile.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				System.out.println("TODO: convert thigs!!!");
+			public void actionPerformed(ActionEvent e) {	
+				// set chosen parameters in gui for file conversion
+				parser.setFilePath(filePath.getText());
+				Map<String, String> parameters = new HashMap<String, String>();
+				parameters.put("headerName", headerName.getText());
+				parameters.put("headerCode", headerCode.getText());
+				parameters.put("headerColumSeparator", headerColumSeparator.getText());
+				parameters.put("headerEndOfLine", headerEndOfLine.getText());
+				parameters.put("bodyName", bodyName.getText());
+				parameters.put("bodyCode", bodyCode.getText());
+				if(BodyTypeC.isSelected()) {
+					parameters.put("bodyRecordType", "C");
+				} else {
+					parameters.put("bodyRecordType", "D");
+				}
+				parameters.put("bodyColumSeparator", bodyColumSeparator.getText());
+				parameters.put("bodyEndOfLine", bodyEndOfLine.getText());
+				parameters.put("footerName", footerName.getText());
+				parameters.put("footerCode", footerCode.getText());
+				parameters.put("footerColumSeparator", footerColumSeparator.getText());
+				parameters.put("footerEndOfLineLabel", footerEndOfLineLabel.getText());
+				parser.setParameters(parameters);
+				
+				// convert file
+				Thread parserThread = new Thread(parser);
+				parserThread.start();
 			}
 		});
 		
-		frame.add(convertFile, BorderLayout.SOUTH);
+		JPanel convertSection = new JPanel(new BorderLayout());
+		convertSection.add(convertFile);
+		parser.setSection(convertSection);
+		
+		frame.add(convertSection, BorderLayout.SOUTH);
+		parser.setFrame(frame);
 
 	}
 
@@ -303,9 +354,9 @@ public class GraphicInterface {
 		frame.setResizable(false);
 	}
     
-   
     // main method
     public static void main(String[] args) {
     	GraphicInterface gui = new GraphicInterface();
     }
+ 
 }

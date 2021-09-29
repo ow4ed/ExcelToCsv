@@ -7,7 +7,7 @@ public class BaseRecord {
 	private char columnSeparator;
 	private char endOfLine;
 	// based on each type of record
-	private int code;
+	private final int code;
 
 	public BaseRecord(int recordCode) {
 		this.code = recordCode;
@@ -39,10 +39,6 @@ public class BaseRecord {
 
 	public int getCode() {
 		return code;
-	}
-
-	public void setCode(int code) {
-		this.code = code;
 	}
 	
 }
