@@ -5,7 +5,7 @@ import java.util.Date;
 public class BodyRecord extends BaseRecord {
 
 	// data retrieved from file
-	private long recordNumber;
+	private long recordId;
 	private Date recordDate;
 	private double value;
 	
@@ -16,12 +16,12 @@ public class BodyRecord extends BaseRecord {
 		super(recordCode);
 	}
 
-	public long getRecordNumber() {
-		return recordNumber;
+	public long getRecordId() {
+		return recordId;
 	}
 
-	public void setRecordNumber(long recordNumber) {
-		this.recordNumber = recordNumber;
+	public void setRecordId(long recordId) {
+		this.recordId = recordId;
 	}
 
 	public Date getRecordDate() {
