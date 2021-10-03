@@ -7,10 +7,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.swing.JFrame;
@@ -18,6 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -69,7 +73,9 @@ public class Parser implements Runnable{
 	@Override
 	public void run() {
 		System.out.println("Parser - run - Start");
-		swapButtonForProgresBar();
+		
+		//TODO progressBar
+		//swapButtonForProgresBar();
 		
 		try {
 		
@@ -78,7 +84,7 @@ public class Parser implements Runnable{
 			FooterRecord footerRecord = generateFooterRecord(bodyRecords.size());
 
 			// update file path for the new CSV File
-			filePath =  Paths.get(filePath).getParent().toString() + csvFileName + "csv";
+			filePath =  Paths.get(filePath).getParent().toString() +  File.separator + csvFileName + ".csv"; 
 			
 			generateCsvFile(headerRecord,bodyRecords,footerRecord);
 			
@@ -93,7 +99,7 @@ public class Parser implements Runnable{
 	
 	private HeaderRecord generateHeaderRecord() {
 		HeaderRecord headerRecord = new HeaderRecord(Integer.parseInt(this.paramaters.get("headerCode")));
-		headerRecord.setName(this.paramaters.get("headerCode"));
+		headerRecord.setName(this.paramaters.get("headerName"));
 		headerRecord.setColumnSeparator(this.paramaters.get("headerColumSeparator").charAt(0));
 		headerRecord.setEndOfLine(this.paramaters.get("headerEndOfLine").charAt(0));
 		return headerRecord;
@@ -103,7 +109,7 @@ public class Parser implements Runnable{
 		FooterRecord footerRecord = new FooterRecord(Integer.parseInt(this.paramaters.get("footerCode")));
 		footerRecord.setName(this.paramaters.get("footerName"));
 		footerRecord.setColumnSeparator(this.paramaters.get("footerColumSeparator").charAt(0));
-		footerRecord.setEndOfLine(this.paramaters.get("footerEndOfLineLabel").charAt(0));
+		footerRecord.setEndOfLine(this.paramaters.get("footerEndOfLine").charAt(0));
 		footerRecord.setNumberOfBodyRecords(numberOfBodyRecords);
 		return footerRecord;
 	}
@@ -117,22 +123,9 @@ public class Parser implements Runnable{
 		//Create Workbook instance holding reference to .xlsx file
 		try (XSSFWorkbook workbook = new XSSFWorkbook(file)) {
 			
-			//Get most recent sheet from the workbook
-			int index = 0;
-			XSSFSheet sheet = workbook.getSheetAt(index);
-			// get the right sheet for the file type C 
-			if(paramaters.get("bodyRecordType").equals("C")) {
-				while(!sheet.getSheetName().contains("obros")) {
-					index++;
-					sheet = workbook.getSheetAt(index);
-				}
-			// get the right sheet for the file type D	
-			} else {
-				while(!sheet.getSheetName().contains("ciones")) {
-					index++;
-					sheet = workbook.getSheetAt(index);
-				}
-			}
+			
+			// get the right sheet to parse
+			XSSFSheet sheet = getSheetToParse(workbook);
 			
 			// generate file path for CSV file
 			this.csvFileName = sheet.getSheetName();
@@ -149,42 +142,119 @@ public class Parser implements Runnable{
 		return bodyRecords;
 	}
 	
-	private void parseExcelData(List<BodyRecord> bodyRecords, XSSFSheet sheet, int percentagePerRow) {
-		int x = 0;
-		int y = 0;
-		// find the cell (x,y) where we should start to extract our data
-		for (int i = 0; i < sheet.getLastRowNum(); i++) {
-			for (int j = 0; j < sheet.getRow(i).getLastCellNum(); j++) {
-				Cell cell = sheet.getRow(i).getCell(j);
-				if (containsData(cell)) {
-					x = cell.getRowIndex();
-					y = cell.getColumnIndex();
-					break;// TODO check if this exitrs the both loops
-				}
+	private XSSFSheet getSheetToParse(XSSFWorkbook workbook) {
+		//Get most recent sheet from the workbook
+		int index = 0;
+		XSSFSheet sheet = workbook.getSheetAt(index);
+		// get the right sheet for the file type C 
+		if(paramaters.get("bodyRecordType").equals("C")) {
+			while(!sheet.getSheetName().contains("obros")) {
+				index++;
+				sheet = workbook.getSheetAt(index);
+			}
+		// get the right sheet for the file type D	
+		} else {
+			while(!sheet.getSheetName().contains("ciones")) {
+				index++;
+				sheet = workbook.getSheetAt(index);
 			}
 		}
+		return sheet;
+	}
 
-		// excel data -> body records
-		// TODO: check if what we are reading from cell is empty
-		while (x < sheet.getLastRowNum()) {
-			while (y < sheet.getRow(x).getLastCellNum()) {
-				long recordNumber = 0;
+
+	private void parseExcelData(List<BodyRecord> bodyRecords, XSSFSheet sheet, int percentagePerRow) {
+		int[] position = getStartOfDataPosition(sheet);
+		
+		if(null != position) {
+			int x = position[0];
+			int y = position[1];
+			
+			// excel data -> body records
+			// while we are reading body type cells
+			//TODO: improve getCell(1) and && condition
+			while ((int)(sheet.getRow(y).getCell(1).getNumericCellValue()) != Integer.parseInt(this.paramaters.get("footerCode")) && y<100) {
+				// while we don't hit an end of line char
+				//TODO
+				
+				Row row = sheet.getRow(y);
+				long recordNumber = (long)row.getCell(x).getNumericCellValue();
+				//TODO: fiz thise 2
+				
 				Date recordDate = null;
-				double value = 0;
+				String stringDate = row.getCell(x + 2).toString().trim();
+				System.out.println(stringDate);
+				
+				//try dateformat model1
+				DateFormat formatModel1 = new SimpleDateFormat("dd-MM-yyyy");
+				DateFormat formatModel2 = new SimpleDateFormat("dd-MMM-yyyy", new Locale("en", "EN"));
+				try {
+					recordDate = formatModel1.parse(stringDate);
+				} catch (ParseException e) {
+					try {
+						recordDate = formatModel2.parse(stringDate);
+						
+					} catch (ParseException e1) {
+						e1.printStackTrace();
+					}
+				}
+				
 
-				bodyRecords.add(generateBodyRecord(recordNumber, recordDate, value));
+				double value = row.getCell(x + 3).getNumericCellValue();
+
+				bodyRecords.add(generateBodyRecord(recordNumber,recordDate, value));
 				updateProgressBar(percentagePerRow);
 				y++;
 			}
-			x++;
 		}
+	}
 
+	private int[] getStartOfDataPosition(XSSFSheet sheet) {
+		// this is how data will be always organized in the Excel File
+		//  x = 0      x = 1     x = 2     x = 3      x = 4
+		// [useless] [useless] [useless] [useless] ['endOfLine']  y = 0
+		// [useless] [useful]  [useful]  [useful]  ['endOfLine']  y = 1
+		// [useless] [useful]  [useful]  [useful]  ['endOfLine']  y = 2
+		// [useless] [useful]  [useful]  [useful]  ['endOfLine']  y = 3
+		// [useless] [useless] [useless] [useless] ['endOfLine']  y = 4
+				
+		
+		// find the cell (x,y) where we should start to extract our data
+		for (int y = 0; y < sheet.getLastRowNum(); y++) {
+			for (int x = 0; x < sheet.getRow(y).getLastCellNum(); x++) {
+				Cell cell = sheet.getRow(y).getCell(x);
+				if (containsData(cell)) {
+					int[] position = new int[2];
+					position[0] = x;
+					position[1] = y;
+					System.out.println("here is my y: " + position[1]);
+					System.out.println("here is my x: " + position[0]);
+					return position;
+				}
+			}
+		}
+		
+		return null;
 	}
 
 
 	private boolean containsData(Cell cell) {
-		// TODO Auto-generated method stub
-		return false;
+		long recordNumber = 0;
+		
+		// if cell dosen't store an number
+		try {
+			recordNumber = (long) cell.getNumericCellValue();
+		} catch (Exception e) {
+			return false;
+		}
+		
+		// if cell number is not big enought 
+		// TODO: improve this
+		if(recordNumber<1000000) {
+			return false;
+		}
+		
+		return true;
 	}
 
 
@@ -204,33 +274,46 @@ public class Parser implements Runnable{
 
 		try (PrintWriter writer = new PrintWriter(new File(filePath))) {
 
-			StringBuilder sb = new StringBuilder();
-			
 			SimpleDateFormat csvDateformat = new SimpleDateFormat("yyyy-MM-dd");
+			
+			StringBuilder sb = new StringBuilder();
 
 			// generate header row
-			sb.append(headerRecord.getName() + headerRecord.getColumnSeparator());
-			sb.append(headerRecord.getCode() + headerRecord.getColumnSeparator());
-			sb.append(csvDateformat.format(headerRecord.getCurrentDate()) + headerRecord.getColumnSeparator());
-			sb.append(headerRecord.getEndOfLine() + '\n');
+			sb.append(headerRecord.getName());
+			sb.append(headerRecord.getColumnSeparator());
+			sb.append(headerRecord.getCode());
+			sb.append(headerRecord.getColumnSeparator());
+			sb.append(csvDateformat.format(headerRecord.getCurrentDate()));
+			sb.append(headerRecord.getColumnSeparator());
+			sb.append(headerRecord.getEndOfLine() + System.lineSeparator());
 
 			// generate body rows
 			for (BodyRecord bodyRecord : bodyRecords) {
-				sb.append(bodyRecord.getName() + bodyRecord.getColumnSeparator());
-				sb.append(bodyRecord.getCode() + bodyRecord.getColumnSeparator());
-				sb.append(bodyRecord.getRecordId() + bodyRecord.getColumnSeparator());
-				sb.append(bodyRecord.getRecordType() + bodyRecord.getColumnSeparator());
-				sb.append(csvDateformat.format(bodyRecord.getRecordDate()) + bodyRecord.getColumnSeparator());
-				sb.append(bodyRecord.getValue() + bodyRecord.getColumnSeparator());
-				sb.append(bodyRecord.getEndOfLine() + '\n');
+				sb.append(bodyRecord.getName());
+				sb.append(bodyRecord.getColumnSeparator());
+				sb.append(bodyRecord.getCode());
+				sb.append(bodyRecord.getColumnSeparator());
+				sb.append(bodyRecord.getRecordId());
+				sb.append(bodyRecord.getColumnSeparator());
+				sb.append(bodyRecord.getRecordType());
+				sb.append(bodyRecord.getColumnSeparator());
+				sb.append(csvDateformat.format(bodyRecord.getRecordDate()));
+				sb.append(bodyRecord.getColumnSeparator());
+				sb.append(bodyRecord.getValue());
+				sb.append(bodyRecord.getColumnSeparator());
+				sb.append(bodyRecord.getEndOfLine() + System.lineSeparator());
 			}
 
 			// generate footer row
-			sb.append(footerRecord.getName() + footerRecord.getColumnSeparator());
-			sb.append(footerRecord.getCode() + footerRecord.getColumnSeparator());
-			sb.append(csvDateformat.format(footerRecord.getCurrentDate()) + footerRecord.getColumnSeparator());
-			sb.append(footerRecord.getNumberOfBodyRecords() + footerRecord.getColumnSeparator());
-			sb.append(footerRecord.getEndOfLine() + '\n');
+			sb.append(footerRecord.getName());
+			sb.append(footerRecord.getColumnSeparator());
+			sb.append(footerRecord.getCode());
+			sb.append(footerRecord.getColumnSeparator());
+			sb.append(csvDateformat.format(footerRecord.getCurrentDate()));
+			sb.append(footerRecord.getColumnSeparator());
+			sb.append(footerRecord.getNumberOfBodyRecords());
+			sb.append(footerRecord.getColumnSeparator());
+			sb.append(footerRecord.getEndOfLine() + System.lineSeparator());
 
 			writer.write(sb.toString());
 

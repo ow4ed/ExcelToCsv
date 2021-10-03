@@ -203,7 +203,7 @@ public class GraphicInterface {
 		bodyName.setFont(new Font("Calibri", Font.BOLD, 25));
 		bodyName.setHorizontalAlignment(JTextField.CENTER);
 		
-		JTextField bodyCode = new JTextField("1");
+		JTextField bodyCode = new JTextField("2");
 		bodyCode.setFont(new Font("Calibri", Font.BOLD, 25));
 		bodyCode.setHorizontalAlignment(JTextField.CENTER);
 		
@@ -273,7 +273,7 @@ public class GraphicInterface {
 		footerName.setFont(new Font("Calibri", Font.BOLD, 25));
 		footerName.setHorizontalAlignment(JTextField.CENTER);
 
-		JTextField footerCode = new JTextField("1");
+		JTextField footerCode = new JTextField("9");
 		footerCode.setFont(new Font("Calibri", Font.BOLD, 25));
 		footerCode.setHorizontalAlignment(JTextField.CENTER);
 
@@ -331,7 +331,7 @@ public class GraphicInterface {
 				parameters.put("footerName", footerName.getText());
 				parameters.put("footerCode", footerCode.getText());
 				parameters.put("footerColumSeparator", footerColumSeparator.getText());
-				parameters.put("footerEndOfLineLabel", footerEndOfLineLabel.getText());
+				parameters.put("footerEndOfLine", footerEndOfLine.getText());
 				parser.setParameters(parameters);
 				
 				// convert file
