@@ -28,7 +28,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import records.BodyRecord;
 import records.FooterRecord;
 import records.HeaderRecord;
-
  
 public class Parser implements Runnable{ 
 	
@@ -50,7 +49,6 @@ public class Parser implements Runnable{
 	public Parser() {
 		this.bar = new JProgressBar();
 	}
-	
 	
 	// *** setters from gui ***
 	
@@ -97,21 +95,14 @@ public class Parser implements Runnable{
 
 	}
 	
+
 	private HeaderRecord generateHeaderRecord() {
 		HeaderRecord headerRecord = new HeaderRecord(Integer.parseInt(this.paramaters.get("headerCode")));
 		headerRecord.setName(this.paramaters.get("headerName"));
+		//TODO
 		headerRecord.setColumnSeparator(this.paramaters.get("headerColumSeparator").charAt(0));
 		headerRecord.setEndOfLine(this.paramaters.get("headerEndOfLine").charAt(0));
 		return headerRecord;
-	}
-	
-	private FooterRecord generateFooterRecord(int numberOfBodyRecords) {
-		FooterRecord footerRecord = new FooterRecord(Integer.parseInt(this.paramaters.get("footerCode")));
-		footerRecord.setName(this.paramaters.get("footerName"));
-		footerRecord.setColumnSeparator(this.paramaters.get("footerColumSeparator").charAt(0));
-		footerRecord.setEndOfLine(this.paramaters.get("footerEndOfLine").charAt(0));
-		footerRecord.setNumberOfBodyRecords(numberOfBodyRecords);
-		return footerRecord;
 	}
 
 	private List<BodyRecord> generateBodyRecords() throws IOException {
@@ -148,6 +139,7 @@ public class Parser implements Runnable{
 		XSSFSheet sheet = workbook.getSheetAt(index);
 		// get the right sheet for the file type C 
 		if(paramaters.get("bodyRecordType").equals("C")) {
+			// 
 			while(!sheet.getSheetName().contains("obros")) {
 				index++;
 				sheet = workbook.getSheetAt(index);
@@ -257,17 +249,29 @@ public class Parser implements Runnable{
 		return true;
 	}
 
-
 	private BodyRecord generateBodyRecord(long recordNumber, Date recordDate, double value) {
 		BodyRecord bodyRecord = new BodyRecord(Integer.parseInt(this.paramaters.get("bodyCode")));
 		bodyRecord.setName(this.paramaters.get("bodyName"));
 		bodyRecord.setRecordId(recordNumber);
-		bodyRecord.setRecordType(this.paramaters.get("bodyRecordType").charAt(0));
+		bodyRecord.setRecordType('C');
 		bodyRecord.setRecordDate(recordDate);
-		bodyRecord.setValue(value);
+		if(this.paramaters.get("bodyRecordType").charAt(0) == 'C') {
+			bodyRecord.setValue(value);
+		} else {
+			bodyRecord.setValue(-value);
+		}
 		bodyRecord.setColumnSeparator(this.paramaters.get("bodyColumSeparator").charAt(0));
 		bodyRecord.setEndOfLine(this.paramaters.get("bodyEndOfLine").charAt(0));
 		return bodyRecord;
+	}
+	
+	private FooterRecord generateFooterRecord(int numberOfBodyRecords) {
+		FooterRecord footerRecord = new FooterRecord(Integer.parseInt(this.paramaters.get("footerCode")));
+		footerRecord.setName(this.paramaters.get("footerName"));
+		footerRecord.setColumnSeparator(this.paramaters.get("footerColumSeparator").charAt(0));
+		footerRecord.setEndOfLine(this.paramaters.get("footerEndOfLine").charAt(0));
+		footerRecord.setNumberOfBodyRecords(numberOfBodyRecords);
+		return footerRecord;
 	}
 
 	private void generateCsvFile(HeaderRecord headerRecord, List<BodyRecord> bodyRecords, FooterRecord footerRecord) {
