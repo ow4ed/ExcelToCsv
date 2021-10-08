@@ -4,8 +4,8 @@ public class BaseRecord {
 	
 	// defined in GUI
 	private String name;
-	private char columnSeparator;
-	private char endOfLine;
+	private String columnSeparator;
+	private String endOfLine;
 	// based on each type of record
 	private final int code;
 
@@ -21,19 +21,19 @@ public class BaseRecord {
 		this.name = name;
 	}
 
-	public char getColumnSeparator() {
+	public String getColumnSeparator() {
 		return columnSeparator;
 	}
 
-	public void setColumnSeparator(char columnSeparator) {
+	public void setColumnSeparator(String columnSeparator) {
 		this.columnSeparator = columnSeparator;
 	}
 	
-	public char getEndOfLine() {
+	public String getEndOfLine() {
 		return endOfLine;
 	}
 
-	public void setEndOfLine(char endOfLine) {
+	public void setEndOfLine(String endOfLine) {
 		this.endOfLine = endOfLine;
 	}
 

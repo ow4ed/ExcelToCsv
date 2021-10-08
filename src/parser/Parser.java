@@ -22,6 +22,7 @@ import javax.swing.JProgressBar;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -45,6 +46,7 @@ public class Parser implements Runnable{
 	
 	// generated csv File name, set when reading excel sheet
 	private String csvFileName;
+
 	
 	public Parser() {
 		this.bar = new JProgressBar();
@@ -100,8 +102,8 @@ public class Parser implements Runnable{
 		HeaderRecord headerRecord = new HeaderRecord(Integer.parseInt(this.paramaters.get("headerCode")));
 		headerRecord.setName(this.paramaters.get("headerName"));
 		//TODO
-		headerRecord.setColumnSeparator(this.paramaters.get("headerColumSeparator").charAt(0));
-		headerRecord.setEndOfLine(this.paramaters.get("headerEndOfLine").charAt(0));
+		headerRecord.setColumnSeparator(this.paramaters.get("headerColumSeparator"));
+		headerRecord.setEndOfLine(this.paramaters.get("headerEndOfLine"));
 		return headerRecord;
 	}
 
@@ -156,6 +158,7 @@ public class Parser implements Runnable{
 
 
 	private void parseExcelData(List<BodyRecord> bodyRecords, XSSFSheet sheet, int percentagePerRow) {
+		
 		int[] position = getStartOfDataPosition(sheet);
 		
 		if(null != position) {
@@ -201,26 +204,25 @@ public class Parser implements Runnable{
 		}
 	}
 
-	private int[] getStartOfDataPosition(XSSFSheet sheet) {
+private int[] getStartOfDataPosition(XSSFSheet sheet) {
 		// this is how data will be always organized in the Excel File
-		//  x = 0      x = 1     x = 2     x = 3      x = 4
-		// [useless] [useless] [useless] [useless] ['endOfLine']  y = 0
-		// [useless] [useful]  [useful]  [useful]  ['endOfLine']  y = 1
-		// [useless] [useful]  [useful]  [useful]  ['endOfLine']  y = 2
-		// [useless] [useful]  [useful]  [useful]  ['endOfLine']  y = 3
-		// [useless] [useless] [useless] [useless] ['endOfLine']  y = 4
-				
+		//  x = 0      x = 1     x = 2     x = 3      x = 4    x = 5       x = 6
+		// [useless] [useless] [useless] ['endOfLine']  		                       y = 0
+		// [useless] [useless]>[useful]< [useless]  [useful]  [useful]  ['endOfLine']  y = 1
+		// [useless] [useless] [useful]  [useless]  [useful]  [useful]  ['endOfLine']  y = 2
+		// [useless] [useless] [useful]  [useless]  [useful]  [useful]  ['endOfLine']  y = 3
+		// [useless] [useless] [useless] [useless] ['endOfLine']                       y = 4
 		
 		// find the cell (x,y) where we should start to extract our data
 		for (int y = 0; y < sheet.getLastRowNum(); y++) {
 			for (int x = 0; x < sheet.getRow(y).getLastCellNum(); x++) {
 				Cell cell = sheet.getRow(y).getCell(x);
-				if (containsData(cell)) {
+				if (isStartOfData(cell, sheet.getRow(y).getCell(x+1))) {
 					int[] position = new int[2];
 					position[0] = x;
 					position[1] = y;
-					System.out.println("here is my y: " + position[1]);
 					System.out.println("here is my x: " + position[0]);
+					System.out.println("here is my y: " + position[1]);
 					return position;
 				}
 			}
@@ -230,23 +232,30 @@ public class Parser implements Runnable{
 	}
 
 
-	private boolean containsData(Cell cell) {
-		long recordNumber = 0;
-		
-		// if cell dosen't store an number
+	private boolean isStartOfData(Cell cell, Cell rightCell) {
+	
+		// if cell value cannot be converted to an recordId type
 		try {
-			recordNumber = (long) cell.getNumericCellValue();
+			Long.parseLong(cell.toString());
 		} catch (Exception e) {
 			return false;
 		}
 		
-		// if cell number is not big enought 
-		// TODO: improve this
-		if(recordNumber<1000000) {
+		// right cell (next to cell in start of data position) will never contain an end of line string
+		if(this.paramaters.get("headerEndOfLine").contentEquals(rightCell.toString())
+				|| this.paramaters.get("bodyEndOfLine").contentEquals(rightCell.toString())
+				|| this.paramaters.get("footerEndOfLine").contentEquals(rightCell.toString())) {
 			return false;
 		}
 		
-		return true;
+		// right cell (next to cell in start of data position) will be empty/a string type not parsable to long
+		try {
+			Long.parseLong(rightCell.toString());
+		} catch (NumberFormatException e) {
+			return true;
+		}
+		
+		return false;
 	}
 
 	private BodyRecord generateBodyRecord(long recordNumber, Date recordDate, double value) {
@@ -260,16 +269,16 @@ public class Parser implements Runnable{
 		} else {
 			bodyRecord.setValue(-value);
 		}
-		bodyRecord.setColumnSeparator(this.paramaters.get("bodyColumSeparator").charAt(0));
-		bodyRecord.setEndOfLine(this.paramaters.get("bodyEndOfLine").charAt(0));
+		bodyRecord.setColumnSeparator(this.paramaters.get("bodyColumSeparator"));
+		bodyRecord.setEndOfLine(this.paramaters.get("bodyEndOfLine"));
 		return bodyRecord;
 	}
 	
 	private FooterRecord generateFooterRecord(int numberOfBodyRecords) {
 		FooterRecord footerRecord = new FooterRecord(Integer.parseInt(this.paramaters.get("footerCode")));
 		footerRecord.setName(this.paramaters.get("footerName"));
-		footerRecord.setColumnSeparator(this.paramaters.get("footerColumSeparator").charAt(0));
-		footerRecord.setEndOfLine(this.paramaters.get("footerEndOfLine").charAt(0));
+		footerRecord.setColumnSeparator(this.paramaters.get("footerColumSeparator"));
+		footerRecord.setEndOfLine(this.paramaters.get("footerEndOfLine"));
 		footerRecord.setNumberOfBodyRecords(numberOfBodyRecords);
 		return footerRecord;
 	}
