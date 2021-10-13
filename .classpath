@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="C:/Users/stefan.tataru/Desktop/Stefan Github/ExcelToCsv/Apache POI/poi-bin-5.0.0-20210120/poi-5.0.0/poi-5.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/stefan.tataru/Desktop/Stefan Github/ExcelToCsv/Apache POI/poi-bin-5.0.0-20210120/poi-5.0.0/poi-5.0.0.jar" sourcepath="C:/Users/stefan.tataru/Desktop/Stefan Github/ExcelToCsv/Apache POI"/>
 	<classpathentry kind="lib" path="C:/Users/stefan.tataru/Desktop/Stefan Github/ExcelToCsv/Apache POI/poi-bin-5.0.0-20210120/poi-5.0.0/poi-examples-5.0.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/stefan.tataru/Desktop/Stefan Github/ExcelToCsv/Apache POI/poi-bin-5.0.0-20210120/poi-5.0.0/poi-excelant-5.0.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/stefan.tataru/Desktop/Stefan Github/ExcelToCsv/Apache POI/poi-bin-5.0.0-20210120/poi-5.0.0/poi-integration-5.0.0.jar"/>

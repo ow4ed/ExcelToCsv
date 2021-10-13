@@ -213,11 +213,15 @@ private int[] getStartOfDataPosition(XSSFSheet sheet) {
 		// [useless] [useless] [useful]  [useless]  [useful]  [useful]  ['endOfLine']  y = 3
 		// [useless] [useless] [useless] [useless] ['endOfLine']                       y = 4
 		
-		// find the cell (x,y) where we should start to extract our data
+		// first [useful] cell contains a number > Max({HeaderRecord.getCode(), BodyRecord.getCode(), FooterRecord.getCode()})
+		int maxCode = Math.max(Integer.parseInt(this.paramaters.get("headerCode")), Integer.parseInt(this.paramaters.get("headerCode")));
+		maxCode = Math.max(maxCode, Integer.parseInt(this.paramaters.get("footerCode")));
+	
+		// find (x,y) of the first [useful] cell
 		for (int y = 0; y < sheet.getLastRowNum(); y++) {
 			for (int x = 0; x < sheet.getRow(y).getLastCellNum(); x++) {
 				Cell cell = sheet.getRow(y).getCell(x);
-				if (isStartOfData(cell, sheet.getRow(y).getCell(x+1))) {
+				if (isStartOfData(cell, maxCode)) {
 					int[] position = new int[2];
 					position[0] = x;
 					position[1] = y;
@@ -232,27 +236,17 @@ private int[] getStartOfDataPosition(XSSFSheet sheet) {
 	}
 
 
-	private boolean isStartOfData(Cell cell, Cell rightCell) {
-	
-		// if cell value cannot be converted to an recordId type
-		try {
-			Long.parseLong(cell.toString());
-		} catch (Exception e) {
-			return false;
-		}
+	private boolean isStartOfData(Cell cell, int maxCode) {
 		
-		// right cell (next to cell in start of data position) will never contain an end of line string
-		if(this.paramaters.get("headerEndOfLine").contentEquals(rightCell.toString())
-				|| this.paramaters.get("bodyEndOfLine").contentEquals(rightCell.toString())
-				|| this.paramaters.get("footerEndOfLine").contentEquals(rightCell.toString())) {
-			return false;
-		}
-		
-		// right cell (next to cell in start of data position) will be empty/a string type not parsable to long
 		try {
-			Long.parseLong(rightCell.toString());
-		} catch (NumberFormatException e) {
-			return true;
+			// working around library "feature":
+			// if cell.toString() returns "1.0" instead of "1" for some reason, we are using Double instead of Long
+ 			if(Double.parseDouble(cell.toString()) > maxCode) {
+ 				return true;
+ 			}
+ 			
+		} catch (NullPointerException | NumberFormatException e) {
+			return false;
 		}
 		
 		return false;
