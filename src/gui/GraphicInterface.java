@@ -89,13 +89,13 @@ public class GraphicInterface {
 			}
 		});
 		
-		JLabel selectInfo = new JLabel("Drag an Excel File Here or Click 'Select File'");
-		selectInfo.setFont(new Font("Calibri", Font.BOLD, 30));
-		selectInfo.setHorizontalAlignment(JLabel.CENTER);
-		selectInfo.setVerticalAlignment(JLabel.CENTER);
+		JLabel information = new JLabel("Drag an Excel File Here or Click 'Select File'");
+		information.setFont(new Font("Calibri", Font.BOLD, 30));
+		information.setHorizontalAlignment(JLabel.CENTER);
+		information.setVerticalAlignment(JLabel.CENTER);
 		Border borderForSelectInfoLabel = BorderFactory.createLineBorder(Color.ORANGE, 15);
-		selectInfo.setBorder(borderForSelectInfoLabel);
-		selectInfo.setDropTarget(new DropTarget() {
+		information.setBorder(borderForSelectInfoLabel);
+		information.setDropTarget(new DropTarget() {
 	        public synchronized void drop(DropTargetDropEvent DropEvent) {
 	            try {
 	            	DropEvent.acceptDrop(DnDConstants.ACTION_COPY);
@@ -110,11 +110,12 @@ public class GraphicInterface {
 	            }
 	        }
 	    });
+		parser.setInformation(information);
 		
 		JPanel searchSection = new JPanel(new BorderLayout());
 		searchSection.add(filePath, BorderLayout.CENTER);
 		searchSection.add(selectFile, BorderLayout.LINE_END);
-		searchSection.add(selectInfo , BorderLayout.NORTH);
+		searchSection.add(information , BorderLayout.NORTH);
 	
 		frame.add(searchSection, BorderLayout.NORTH);
 		
@@ -335,18 +336,18 @@ public class GraphicInterface {
 				parser.setParameters(parameters);
 				
 				// convert file
+				parser.informSelectFile();
 				Thread parserThread = new Thread(parser);
 				parserThread.start();
 			}
 		});
+		parser.setConvertfile(convertFile);
 		
 		JPanel convertSection = new JPanel(new BorderLayout());
 		convertSection.add(convertFile);
-		parser.setSection(convertSection);
+		parser.setConvertSection(convertSection);
 		
 		frame.add(convertSection, BorderLayout.SOUTH);
-		parser.setFrame(frame);
-
 	}
 
     public void open() {
