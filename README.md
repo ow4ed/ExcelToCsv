@@ -1,8 +1,7 @@
-*** ExcelToCsv ***
+# ExcelToCsv
+# Version 2.0 
 
-*** Version 2.0 ***
-
-*** Executabe Bin ***
+# Executabe Bin
 /target/excel-to-csv-2.0.0-jar-with-dependencies
 
 # Main branch -> incremental versions of the program working as intended
