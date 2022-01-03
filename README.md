@@ -1,11 +1,11 @@
 # ExcelToCsv
 # Version 2.0 
 
-# Executabe Bin
-/target/excel-to-csv-2.0.0-jar-with-dependencies
-
 # Master branch -> incremental versions of the program working as intended
 # Development -> used for further development of the program
+
+# Executabe:
+/target/excel-to-csv-2.0.0-jar-with-dependencies
 
 # Sample:
 ![image](https://user-images.githubusercontent.com/55886855/147970504-d42e3413-cb14-492a-8b72-0e9120699833.png)
